@@ -37,11 +37,11 @@ def build_context(search_results):
 
     return "\n".join(lines).strip()
 
-def prompt(question, search_results):
+def build_prompt(question, search_results):
     context = build_context(search_results=search_results)
     return USER_QUERY_TEMPLATE.format(question=question, context=context)
 
-question = "I just discovered the course. Can I still join now?"
-search_results = search(question=question, course="llm-zoomcamp")
-print(prompt(question=question, search_results=search_results))
+# question = "I just discovered the course. Can I still join now?"
+# search_results = search(question=question, course="llm-zoomcamp")
+# print(build_prompt(question=question, search_results=search_results))
     
