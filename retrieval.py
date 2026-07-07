@@ -50,7 +50,6 @@ index.fit(faqs_data)
 def search(question, course):
     boost_params = {
         "question": 2.0,
-        "answer": 1.0,
         "section": 0.5,
     }
     filter_params = {
@@ -65,4 +64,6 @@ def search(question, course):
     )
 
 
-print(search(question="Can I enroll in the course after the start date?", course="llm-zoomcamp"))
+# Observe the difference between two search results
+# print(search(question="Can I enroll in the course after the start date?", course="llm-zoomcamp"))
+# print(search(question="I just discovered the course. Can I still join now?", course="llm-zoomcamp"))
