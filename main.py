@@ -1,31 +1,25 @@
 from openai import OpenAI
 
-from prompt import INSTRUCTIONS, build_prompt
-from retrieval import search
+from ingest import load_faq_data, build_index
+from rag_helper import RAGBase
 
-client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+faqs_data = load_faq_data()
+index = build_index(documents=faqs_data)
 
-
-def llm(instructions, prompt, model):
-    message_history = [
-        {"role": "developer", "content": instructions},
-        {"role": "user", "content": prompt}
-    ]
-    response = client.responses.create(model=model, input=message_history)
-    return response.output_text
-
-def rag(query, model):
-    search_results = search(question=query, course="llm-zoomcamp")
-    prompt = build_prompt(question=query, search_results=search_results)
-    llm_response = llm(instructions=INSTRUCTIONS, prompt=prompt, model=model)
-    return llm_response
+ollama_client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
 
 def main():
-    print("Hello from llm-zoomcamp-2026-code!")
+
+    print("Hello from llm-zoomcamp-assistant!")
+    
+    llm_zc_assistant =  RAGBase(
+        index=index,
+        llm_client=ollama_client
+    )
 
     while True:
         user_query = input("Plese enter your question: ").strip()
-        print(rag(user_query, model="llama3.1"))
+        print(llm_zc_assistant.rag(user_query))
 
 if __name__ == "__main__":
     main()
