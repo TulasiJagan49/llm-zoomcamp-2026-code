@@ -1,10 +1,14 @@
 from openai import OpenAI
 
-from ingest import load_faq_data, build_index
+from sqlitesearch import TextSearchIndex
 from rag_helper import RAGBase
 
-faqs_data = load_faq_data()
-index = build_index(documents=faqs_data)
+
+index = TextSearchIndex(
+    text_fields=["question", "section", "answer"],
+    keyword_fields=["course"],
+    db_path="faq.db"
+)
 
 ollama_client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
 
@@ -20,6 +24,7 @@ def main():
     while True:
         user_query = input("Plese enter your question: ").strip()
         print(llm_zc_assistant.rag(user_query))
+
 
 if __name__ == "__main__":
     main()

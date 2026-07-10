@@ -1,6 +1,7 @@
 import requests
+import time
 
-from minsearch import Index
+from sqlitesearch import TextSearchIndex
 
 '''
 The faqs data is cleaned and prepared by course owner, and provided to us,
@@ -29,15 +30,21 @@ def load_faq_data():
     
     return faqs_data
 
-'''
-More information about the minsearch library can be found here:
-https://github.com/alexeygrigorev/build-your-own-search-engine
-'''
-def build_index(documents):
-    index = Index(
-        text_fields=["question", "section", "answer"],
-        keyword_fields=["course"]
-    )
-    index.fit(documents)
-    return index
+faqs_data = load_faq_data()
+print(f"Loaded {len(faqs_data)} documents")
+
+
+index = TextSearchIndex(
+    text_fields=["question", "section", "answer"],
+    keyword_fields=["course"],
+    db_path="faq.db"
+)
+
+for doc in faqs_data:
+    index.add(doc)
+    print(f"""Added: {doc["question"][:60]}...""")
+    time.sleep(0.5)
+
+index.close()
+print("Done. Index saved to faq.db")
 
