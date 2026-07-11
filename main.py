@@ -16,7 +16,7 @@ def main():
 
     print("Hello from llm-zoomcamp-assistant!")
     
-    llm_zc_assistant =  RAGBase(
+    llm_zc_assistant = RAGBase(
         index=index,
         llm_client=ollama_client
     )

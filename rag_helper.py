@@ -73,7 +73,7 @@ class RAGBase:
     
     def llm(self, prompt):
         input_messages = [
-            {"role": "developer", "content": self.instructions},
+            {"role": "system", "content": self.instructions},
             {"role": "user", "content": prompt}
         ]
 
@@ -91,7 +91,3 @@ class RAGBase:
         answer = self.llm(prompt)
         return answer
 
-
-# question = "I just discovered the course. Can I still join now?"
-# search_results = search(question=question, course="llm-zoomcamp")
-# print(build_prompt(question=question, search_results=search_results))
