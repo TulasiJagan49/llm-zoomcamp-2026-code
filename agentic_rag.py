@@ -1,3 +1,4 @@
+import json
 from openai import OpenAI
 
 from sqlitesearch import TextSearchIndex
@@ -38,6 +39,39 @@ search_tool = {
     }
 }
 
+instructions = """
+You're a course teaching assistant.
+You're given a question from a course student and your task is to answer it.
+
+If you want to look up information, use the search function. 
+Use as many keywords from the user question as possible when making first requests.
+
+Make multiple searches. First perform search, analyze the results 
+and then perform more searches. 
+
+The question has to be about the course or its logistics, offtopic questions 
+shouldn't be answered. If the search returns nothing, it's likely an off-topic question.
+If you can't answer the question using FAQ, don't do it yourself. Only use the 
+facts from the FAQ database.
+
+At the end, ask if there are other areas that the user wants to explore.
+""".strip()
+
+
+def make_call(call):
+    args = json.loads(call.arguments)
+
+    if call.name == "search":
+        result = search(**args)
+
+    result_json = json.dumps(result, indent=2)
+
+    return {
+        "type": "function_call_output",
+        "call_id": call.call_id,
+        "output": result_json,
+    }
+
 
 def main():
 
@@ -47,44 +81,44 @@ def main():
     llm_client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
 
     messages = list()
+    messages.append({"role": "developer", "content": instructions})
     query = input("Please enter your query: ")
     messages.append({"role": "user", "content": query})
-    
-    response = llm_client.responses.create(
-        model="llama3.1",
-        input = messages,
-        tools=[search_tool]
-    )
 
-    print(response.output)
-    print(response.usage)
+    iter_count = 1
+    total_tokens_used = 0
 
-    import json
+    while True:
 
-    call = response.output[0]
-    args=json.loads(call.arguments)
+        has_function_calls = False
+        
+        print(f"Iteration #{iter_count}...")
+        response = llm_client.responses.create(
+            model="llama3.1",
+            input = messages,
+            tools=[search_tool]
+        )
 
-    results = search(**args)
-    result_json = json.dumps(results, indent=2)
+        total_tokens_used += (response.usage.input_tokens + response.usage.output_tokens)
 
-    print(result_json)
+        messages.extend(response.output)
+        for item in response.output:
 
-    messages.extend(response.output)
+            if item.type == "function_call":
+                print(f"Call Information:", item.name, item.arguments)
+                call_output = make_call(item)
+                messages.append(call_output)
+                has_function_calls = True
+            
+            elif item.type == "message":
+                print(f"Final Answer...", item.content[0].text)
+        
 
-    messages.append({
-        "type": "function_call_output",
-        "call_id": call.call_id,
-        "output": result_json
-    })
+        if not has_function_calls:
+            print(total_tokens_used)
+            break
 
-    response = llm_client.responses.create(
-        model="llama3.1",
-        input=messages,
-        tools=[search_tool]
-    )
-
-    print(response.output_text)
-    print(response.usage)
+        iter_count += 1
 
 if __name__ == "__main__":
     main()
