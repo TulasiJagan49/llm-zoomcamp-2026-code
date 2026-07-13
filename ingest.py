@@ -30,21 +30,23 @@ def load_faq_data():
     
     return faqs_data
 
-faqs_data = load_faq_data()
-print(f"Loaded {len(faqs_data)} documents")
+
+def index_data_to_sql():
+    faqs_data = load_faq_data()
+    print(f"Loaded {len(faqs_data)} documents")
 
 
-index = TextSearchIndex(
-    text_fields=["question", "section", "answer"],
-    keyword_fields=["course"],
-    db_path="faq.db"
-)
+    index = TextSearchIndex(
+        text_fields=["question", "section", "answer"],
+        keyword_fields=["course"],
+        db_path="faq.db"
+    )
 
-for doc in faqs_data:
-    index.add(doc)
-    print(f"""Added: {doc["question"][:60]}...""")
-    time.sleep(0.5)
+    for doc in faqs_data:
+        index.add(doc)
+        print(f"""Added: {doc["question"][:60]}...""")
+        time.sleep(0.5)
 
-index.close()
-print("Done. Index saved to faq.db")
+    index.close()
+    print("Done. Index saved to faq.db")
 
