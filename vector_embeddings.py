@@ -1,25 +1,11 @@
+import numpy as np
+
 from sentence_transformers import SentenceTransformer
+from minsearch import VectorSearch
 
 from ingest import load_faq_data
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
-
-# q1 = "I just discovered about the course, can I join now?"
-
-# v1 = model.encode(q1)
-
-# q2 = "Can I still enroll to this course, even if it has started?"
-
-# v2 = model.encode(q2)
-
-# q3 = "How do I install Docker locally?"
-
-# v3 = model.encode(q3)
-
-# a  = "You don't need to register. You're accepted. You can also just start learning and submitting homework without registering."
-# av = model.encode(a)
-
-# print(v1.dot(v2), v1.dot(v3), av.dot(v1), av.dot(v2), av.dot(v3))
 
 faq_info = load_faq_data()
 
@@ -38,5 +24,30 @@ for i in range(0, len(faq_texts), batch_size):
     batch = faq_texts[i:i+batch_size]
     faqs_as_vectors.extend(model.encode(batch))
 
-print(len(faqs_as_vectors), faqs_as_vectors[10].shape)
+# print(len(faqs_as_vectors), faqs_as_vectors[10].shape)
+
+query = "Can I still join the course after the start date?"
+query_vector = model.encode(query)
+
+np_vectors = np.array(faqs_as_vectors)
+
+# print(np_vectors.shape)
+
+# scores = np_vectors.dot(query_vector)
+
+# idx = np.argmax(scores)
+# print(idx, scores[idx], faq_info[idx])
+
+# top_five = np.argsort(-scores)[:5]
+
+# for idx in top_five:
+#     print(scores[idx])
+#     print(faq_info[idx])
+
+vector_index = VectorSearch(keyword_fields=["course"])
+vector_index.fit(np_vectors, faq_info)
+
+results = vector_index.search(query_vector=query_vector, filter_dict={"course": "llm-zoomcamp"}, num_results=5)
+
+print(results)
 
