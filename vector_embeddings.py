@@ -26,8 +26,8 @@ for i in range(0, len(faq_texts), batch_size):
 
 # print(len(faqs_as_vectors), faqs_as_vectors[10].shape)
 
-query = "Can I still join the course after the start date?"
-query_vector = model.encode(query)
+# query = "Can I still join the course after the start date?"
+# query_vector = model.encode(query)
 
 np_vectors = np.array(faqs_as_vectors)
 
@@ -47,7 +47,7 @@ np_vectors = np.array(faqs_as_vectors)
 vector_index = VectorSearch(keyword_fields=["course"])
 vector_index.fit(np_vectors, faq_info)
 
-results = vector_index.search(query_vector=query_vector, filter_dict={"course": "llm-zoomcamp"}, num_results=5)
+# results = vector_index.search(query_vector=query_vector, filter_dict={"course": "llm-zoomcamp"}, num_results=5)
 
-print(results)
+# print(results)
 

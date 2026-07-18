@@ -1,10 +1,10 @@
 from openai import OpenAI
 
 from sqlitesearch import TextSearchIndex
-from rag_helper import RAGBase
+from rag_helper import RAGBase, RAGVector
+from vector_embeddings import model, vector_index
 
-
-index = TextSearchIndex(
+keyword_index = TextSearchIndex(
     text_fields=["question", "section", "answer"],
     keyword_fields=["course"],
     db_path="faq.db"
@@ -16,8 +16,9 @@ def main():
 
     print("Hello from llm-zoomcamp-assistant!")
     
-    llm_zc_assistant = RAGBase(
-        index=index,
+    llm_zc_assistant = RAGVector(
+        embedder=model,
+        index=vector_index,
         llm_client=ollama_client
     )
 

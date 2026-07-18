@@ -91,3 +91,18 @@ class RAGBase:
         answer = self.llm(prompt)
         return answer
 
+class RAGVector(RAGBase):
+
+    def __init__(self, embedder, **kwargs):
+        super().__init__(**kwargs)
+        self.embedder = embedder
+
+    def search(self, query, num_of_results=5):
+        query_as_vector = self.embedder.encode(query)
+        filter_dict = {"course": self.course}
+
+        return self.index.search(
+            query_vect=query_as_vector,
+            filter_dict=filter_dict,
+            num_results=num_of_results
+        )
