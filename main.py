@@ -1,16 +1,14 @@
+import psycopg
 from openai import OpenAI
 
 
-from rag_helper import RAGVector
+from rag_helper import RAGPgVector
 from sentence_transformers import SentenceTransformer
-from sqlitesearch import VectorSearchIndex
 
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
-vector_index = VectorSearchIndex(
-    mode="ivf",
-    keyword_fields=["course"],
-    db_path="faq_vectors.db"
+psql_conn = psycopg.connect(
+    "postgresql://user:pswd@localhost:5432/faq"
 )
 
 ollama_client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
@@ -19,9 +17,9 @@ def main():
 
     print("Hello from llm-zoomcamp-assistant!")
     
-    llm_zc_assistant = RAGVector(
+    llm_zc_assistant = RAGPgVector(
         embedder=model,
-        index=vector_index,
+        conn=psql_conn,
         llm_client=ollama_client
     )
 

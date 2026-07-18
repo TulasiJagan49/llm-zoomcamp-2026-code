@@ -1,7 +1,7 @@
 """
-    Prompt is divided into two parts:
-    1. INSTRUCTIONS - which remain the same for every request sent to LLM
-    2. USER QUERY - which changes with every request
+Prompt is divided into two parts:
+1. INSTRUCTIONS - which remain the same for every request sent to LLM
+2. USER QUERY - which changes with every request
 """
 
 INSTRUCTIONS = """
@@ -23,9 +23,9 @@ Context:
 
 
 class RAGBase:
-    '''
-        An encapsulation of all things needed by a basic rag
-    '''
+    """
+    An encapsulation of all things needed by a basic rag
+    """
 
     def __init__(
         self,
@@ -51,9 +51,8 @@ class RAGBase:
             query,
             num_results=num_results,
             boost_dict=boost_dict,
-            filter_dict=filter_dict
+            filter_dict=filter_dict,
         )
-
 
     def build_context(self, search_results):
         lines = []
@@ -66,30 +65,28 @@ class RAGBase:
 
         return "\n".join(lines).strip()
 
-
     def build_prompt(self, question, search_results):
         context = self.build_context(search_results=search_results)
         return self.prompt_template.format(question=question, context=context)
-    
+
     def llm(self, prompt):
         input_messages = [
             {"role": "system", "content": self.instructions},
-            {"role": "user", "content": prompt}
+            {"role": "user", "content": prompt},
         ]
 
         response = self.llm_client.responses.create(
-            model=self.model,
-            input=input_messages
+            model=self.model, input=input_messages
         )
 
         return response.output_text
-
 
     def rag(self, query):
         search_results = self.search(query)
         prompt = self.build_prompt(query, search_results)
         answer = self.llm(prompt)
         return answer
+
 
 class RAGVector(RAGBase):
 
@@ -104,5 +101,41 @@ class RAGVector(RAGBase):
         return self.index.search(
             query_vector=query_as_vector,
             filter_dict=filter_dict,
-            num_results=num_of_results
+            num_results=num_of_results,
         )
+
+
+class RAGPgVector(RAGBase):
+
+    def __init__(self, embedder, conn, **kwargs):
+        super().__init__(index=None, **kwargs)
+        self.embedder = embedder
+        self.conn = conn
+
+    def vec_to_str(self, vector):
+        return "[" + ",".join(str(x) for x in vector) + "]"
+
+    def search(self, query, num_results=5):
+        query_vector = self.embedder.encode(query)
+        query_str = self.vec_to_str(query_vector)
+
+        rows = self.conn.execute(
+            """
+            SELECT course, section, question, answer            
+            FROM documents
+            WHERE course=%s
+            ORDER BY embedding <=> %s::vector
+            LIMIT %s
+            """,
+            (self.course, query_str, num_results),
+        ).fetchall()
+
+        return [
+            {
+                "course": r[0],
+                "section": r[1],
+                "question": r[2],
+                "answer": r[3],
+            }
+            for r in rows
+        ]
