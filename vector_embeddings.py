@@ -1,7 +1,8 @@
 import numpy as np
 
 from sentence_transformers import SentenceTransformer
-from minsearch import VectorSearch
+from sqlitesearch import VectorSearchIndex
+from tqdm.auto import tqdm
 
 from ingest import load_faq_data
 
@@ -9,45 +10,56 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 
 faq_info = load_faq_data()
 
-faq_texts = []
+def process_data():   
 
-for doc in faq_info:
-    text = doc["question"] + " " +doc["answer"]
-    faq_texts.append(text)
+    faq_texts = []
 
-from tqdm.auto import tqdm
+    for doc in faq_info:
+        text = doc["question"] + " " +doc["answer"]
+        faq_texts.append(text)
+    
+    return faq_texts
 
-batch_size = 50
-faqs_as_vectors = []
+def embed_data(faq_texts):
 
-for i in range(0, len(faq_texts), batch_size):
-    batch = faq_texts[i:i+batch_size]
-    faqs_as_vectors.extend(model.encode(batch))
+    batch_size = 50
+    faqs_as_vectors = []
 
-# print(len(faqs_as_vectors), faqs_as_vectors[10].shape)
+    for i in range(0, len(faq_texts), batch_size):
+        batch = faq_texts[i:i+batch_size]
+        faqs_as_vectors.extend(model.encode(batch))
+    
+    np_vectors = np.array(faqs_as_vectors)
 
-# query = "Can I still join the course after the start date?"
-# query_vector = model.encode(query)
+    return np_vectors
 
-np_vectors = np.array(faqs_as_vectors)
+def build_index(np_vectors, faq_info):
 
-# print(np_vectors.shape)
+    vector_index = VectorSearchIndex(
+        mode='ivf',
+        keyword_fields=["course"],
+        db_path="faq_vectors.db"
+    )
+    vector_index.fit(np_vectors, faq_info)
 
-# scores = np_vectors.dot(query_vector)
+    return vector_index
 
-# idx = np.argmax(scores)
-# print(idx, scores[idx], faq_info[idx])
+def search(vector_index):
 
-# top_five = np.argsort(-scores)[:5]
+    query = "Can I still join the course after the start date?"
+    query_vector = model.encode(query)
+    results = vector_index.search(query_vector=query_vector, filter_dict={"course": "llm-zoomcamp"}, num_results=5)
 
-# for idx in top_five:
-#     print(scores[idx])
-#     print(faq_info[idx])
+    print(results)
 
-vector_index = VectorSearch(keyword_fields=["course"])
-vector_index.fit(np_vectors, faq_info)
 
-# results = vector_index.search(query_vector=query_vector, filter_dict={"course": "llm-zoomcamp"}, num_results=5)
-
-# print(results)
+if __name__=="__main__":
+    # If the data is loaded, otherwise run the boilerplate code
+    # to load it.
+    vector_index = VectorSearchIndex(
+        mode='ivf',
+        keyword_fields=["course"],
+        db_path="faq_vectors.db"
+    )
+    search()
 

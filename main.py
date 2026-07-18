@@ -1,13 +1,16 @@
 from openai import OpenAI
 
-from sqlitesearch import TextSearchIndex
-from rag_helper import RAGBase, RAGVector
-from vector_embeddings import model, vector_index
 
-keyword_index = TextSearchIndex(
-    text_fields=["question", "section", "answer"],
+from rag_helper import RAGVector
+from sentence_transformers import SentenceTransformer
+from sqlitesearch import VectorSearchIndex
+
+
+model = SentenceTransformer("all-MiniLM-L6-v2")
+vector_index = VectorSearchIndex(
+    mode="ivf",
     keyword_fields=["course"],
-    db_path="faq.db"
+    db_path="faq_vectors.db"
 )
 
 ollama_client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")

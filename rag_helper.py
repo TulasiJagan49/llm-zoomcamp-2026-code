@@ -102,7 +102,7 @@ class RAGVector(RAGBase):
         filter_dict = {"course": self.course}
 
         return self.index.search(
-            query_vect=query_as_vector,
+            query_vector=query_as_vector,
             filter_dict=filter_dict,
             num_results=num_of_results
         )
