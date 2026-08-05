@@ -1,8 +1,13 @@
 import json
+import pandas as pd
+
+from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
 from openai import OpenAI
 from pydantic import BaseModel
+from tqdm.auto import tqdm
 
+from evaluation_utils import llm_structured_retry, map_progress, calc_total_price
 from ingest import load_faq_data
 
 
@@ -33,20 +38,36 @@ on the internet. Not too formal, not too short, not too long.
 
 llm_client = OpenAI()
 
-# Let us test the generation with one document
-faq = llm_zc_faqs[0]
-print(faq["id"], faq["question"], faq["answer"])
-user_prompt = json.dumps(faq)
+def generate_ground_truth(doc):
 
-messages = [
-    {"role": "developer", "content": data_gen_instructions},
-    {"role": "user", "content": user_prompt}
-]
+    user_prompt = json.dumps(doc)
 
-response = llm_client.responses.parse(
-    model = "gpt-5.4-mini",
-    input = messages,
-    text_format=Question
-)
+    output, usage = llm_structured_retry(
+        client=llm_client,
+        instructions=data_gen_instructions,
+        user_prompt=user_prompt,
+        output_type=Question
+    )
 
-print(response.output_parsed.questions)
+    results = []
+
+    for question in output.questions:
+        results.append({"question": question, "document": doc["id"]})
+
+    return results, usage
+
+with ThreadPoolExecutor(max_workers=6) as pool:
+    results = map_progress(pool, llm_zc_faqs, generate_ground_truth)
+
+ground_truth = []
+usages = []
+
+for records, usage in results:
+    ground_truth.extend(records)
+    usages.append(usage)
+
+print(len(ground_truth))
+print(calc_total_price(usages))
+
+df_ground_truth = pd.DataFrame(ground_truth)
+df_ground_truth.to_csv("./data/ground_truth-new.csv", index=False)
