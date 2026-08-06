@@ -51,5 +51,35 @@ def compute_relevance_for_all(truth_records, search_fn):
 
     return all_the_relevance
 
-relevance_info = compute_relevance_for_all(ground_truth, text_search)
-print(relevance_info[:35])
+def hit_rate(relevance):
+    count = 0
+
+    for row in relevance:
+        if 1 in row:
+            count += 1
+
+    return count/len(relevance)
+
+
+def mrr(relevance):
+    total_score = 0.0
+
+    for row in relevance:
+        for idx, value in enumerate(row, start=1):
+            if value:
+                score = 1/(idx)
+                total_score += score
+                break
+
+    return total_score/len(relevance)
+
+def evaluate(ground_truth, search_fn):
+
+    relevance = compute_relevance_for_all(ground_truth, search_fn)
+
+    return {
+        "hit_rate": hit_rate(relevance),
+        "mrr": mrr(relevance)
+    }
+
+print(evaluate(ground_truth, text_search))
