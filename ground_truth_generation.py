@@ -27,14 +27,30 @@ class Question(BaseModel):
     questions: list[str]
 
 data_gen_instructions = """
-You emulate a student who's taking our course.
-Formulate 5 questions this student might ask based on a FAQ record. The record
-should contain the answer to the questions, and the questions should be complete and not too short.
-If possible, use as fewer words as possible from the record.
+You are generating search queries for evaluating a search engine.
 
-The output should resemble how people ask questions
-on the internet. Not too formal, not too short, not too long.
-""".strip()
+The FAQ record answers the user's question.
+
+Generate FIVE queries from FIVE different users.
+
+1. Beginner who doesn't know the terminology.
+2. Experienced engineer.
+3. Someone frustrated because something failed.
+4. Someone searching very quickly (2-5 words).
+5. Someone writing a long natural-language question.
+
+Rules:
+
+- Never copy sentences from the FAQ.
+- Avoid unique nouns whenever possible.
+- Use synonyms.
+- Leave out details that a real user wouldn't know.
+- Sometimes describe the problem instead of asking directly.
+- Include one query with a typo or abbreviation.
+- Make each query look like something copied from real search logs.
+
+Return only the five questions.
+"""
 
 llm_client = OpenAI()
 
