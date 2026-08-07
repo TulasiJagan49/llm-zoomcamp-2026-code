@@ -1,3 +1,6 @@
+'''
+Generating questions from the FAQ's Data.
+'''
 import json
 import pandas as pd
 
@@ -8,19 +11,12 @@ from pydantic import BaseModel
 from tqdm.auto import tqdm
 
 from evaluation_utils import llm_structured_retry, map_progress, calc_total_price
-from ingest import load_faq_data
+from ingest import filter_faq_data_by_course
 
 
 load_dotenv()
 
-faq_documents = load_faq_data()
-
-llm_zc_faqs = []
-
-for doc in faq_documents:
-    if doc["course"] == "llm-zoomcamp":
-        llm_zc_faqs.append(doc)
-
+llm_zc_faqs = filter_faq_data_by_course(course="llm-zoomcamp")
 print(len(llm_zc_faqs))
 
 class Question(BaseModel):

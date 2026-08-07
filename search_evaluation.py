@@ -1,23 +1,16 @@
 import pandas as pd
 
-from minsearch import Index
-
-from ingest import load_faq_data
+from ingest import build_minsearch_text_index, filter_faq_data_by_course
 
 df_ground_truth = pd.read_csv("./data/ground_truth-new.csv")
 ground_truth = df_ground_truth.to_dict(orient="records")
 
-faq_data = load_faq_data()
-llm_zc_data = []
-
-for doc in faq_data:
-    if doc["course"] == "llm-zoomcamp":
-        llm_zc_data.append(doc)
-
-llmzc_text_index = Index(
-    text_fields=["question", "answer", "section"], keyword_fields=["course"]
+llm_zc_data = filter_faq_data_by_course(course="llm-zoomcamp")
+llmzc_text_index = build_minsearch_text_index(
+    data=llm_zc_data,
+    text_fields=["question", "answer", "section"],
+    keyword_fields=["course"],
 )
-llmzc_text_index.fit(llm_zc_data)
 
 
 def text_search(query):

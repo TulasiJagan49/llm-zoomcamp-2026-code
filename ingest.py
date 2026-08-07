@@ -1,6 +1,7 @@
 import requests
 import time
 
+from minsearch import Index
 from sqlitesearch import TextSearchIndex
 
 '''
@@ -49,4 +50,24 @@ def index_data_to_sql():
 
     index.close()
     print("Done. Index saved to faq.db")
+
+def filter_faq_data_by_course(course="llm-zoomcamp"):
+    faq_data = load_faq_data()
+    llm_zc_faq_data = []
+
+    for doc in faq_data:
+        if doc["course"] == course:
+            llm_zc_faq_data.append(doc)
+
+    return llm_zc_faq_data
+
+def build_minsearch_text_index(data, text_fields, keyword_fields):
+
+    index = Index(
+        text_fields=text_fields,
+        keyword_fields=keyword_fields
+    )
+    index.fit(data)
+
+    return index
 
