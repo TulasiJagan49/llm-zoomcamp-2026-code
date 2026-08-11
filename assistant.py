@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from ingest import load_faq_data, build_minsearch_text_index
-from rag_helper import RAGBase
+from metrics import RAGWithMetrics
 
 
 def create_assistant():
@@ -22,7 +22,7 @@ def create_assistant():
         keyword_fields=["course"],
     )
 
-    return RAGBase(
+    return RAGWithMetrics(
         llm_client=llm_client,
         model="gpt-5.4-mini",
         index=faq_index
