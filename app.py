@@ -6,6 +6,7 @@ import streamlit as st
 
 from assistant import create_assistant
 from db_save import save_conversation, save_feedback
+from online_judge import evaluate_relevance
 
 
 # -----------------------------
@@ -88,6 +89,10 @@ if st.button("Ask", type="primary", use_container_width=True):
                 "llm-zoomcamp",
             )
 
+            relevance, explanation = evaluate_relevance(user_input, answer)
+            save_feedback(conversation_id, "judge",
+                            relevance=relevance, explanation=explanation)
+
         # Save everything in session state
         st.session_state.answer = answer
         st.session_state.conversation_id = conversation_id
@@ -95,6 +100,8 @@ if st.button("Ask", type="primary", use_container_width=True):
         st.session_state.prompt_tokens = record.prompt_tokens
         st.session_state.completion_tokens = record.completion_tokens
         st.session_state.cost = record.cost
+        st.session_state.relevance = relevance
+        st.session_state.explanation = explanation
 
         st.success("Completed!")
 
@@ -107,6 +114,11 @@ if st.session_state.answer is not None:
     st.markdown("### Answer")
 
     st.markdown(st.session_state.answer)
+
+    st.markdown(f"""We are using llm as a judge to do evaluation of answers, for the question submitted.
+    Relevancy of the answer provided by LLM: {st.session_state.relevance}
+    Explanation on why that is relevant: {st.session_state.explanation}
+    """)
 
     # Metrics
     st.divider()
