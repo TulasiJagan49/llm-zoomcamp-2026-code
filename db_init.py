@@ -46,6 +46,34 @@ def init_db(drop=False):
     finally:
         conn.close()
 
+
+def init_feedback(drop=False):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            if drop:
+                cur.execute("DROP TABLE IF EXISTS feedback")
+
+            cur.execute(
+                """
+                CREATE TABLE feedback (
+                    id SERIAL PRIMARY KEY,
+                    conversation_id INTEGER REFERENCES llm_call_records(id),
+                    source TEXT NOT NULL,
+                    relevance TEXT,
+                    explanation TEXT,
+                    score INTEGER,
+                    timestamp TIMESTAMP WITH TIME ZONE NOT NULL
+                )
+                """
+            )
+        conn.commit()
+    except Exception as e:
+        print(f"Exception: {e}")
+    finally:
+        conn.close()
+
 if __name__ == "__main__":
     init_db()
+    init_feedback()
     print("Database initialized")
